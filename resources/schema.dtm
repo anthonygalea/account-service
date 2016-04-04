@@ -1,0 +1,64 @@
+[
+ ;; account
+
+ {:db/id                 #db/id[:db.part/db]
+  :db/ident              :account/balance
+  :db/valueType          :db.type/bigdec
+  :db/cardinality        :db.cardinality/one
+  :db/doc                "An account's balance"
+  :db.install/_attribute :db.part/db}
+
+ ;; transfer
+
+ {:db/id                 #db/id[:db.part/db]
+  :db/ident              :transfer/amount
+  :db/valueType          :db.type/bigdec
+  :db/cardinality        :db.cardinality/one
+  :db/doc                "A transaction's amount"
+  :db.install/_attribute :db.part/db}
+
+ {:db/id                 #db/id[:db.part/db]
+  :db/ident              :transfer/from-account
+  :db/valueType          :db.type/ref
+  :db/cardinality        :db.cardinality/one
+  :db/doc                "An account from which to transfer money"
+  :db.install/_attribute :db.part/db}
+
+ {:db/id                 #db/id[:db.part/db]
+  :db/ident              :transfer/to-account
+  :db/valueType          :db.type/ref
+  :db/cardinality        :db.cardinality/one
+  :db/doc                "An account to which to transfer money"
+  :db.install/_attribute :db.part/db}
+
+ {:db/id                 #db/id[:db.part/db]
+  :db/ident              :transfer/status
+  :db/valueType          :db.type/ref
+  :db/cardinality        :db.cardinality/one
+  :db/doc                "The status of a transfer"
+  :db.install/_attribute :db.part/db}
+
+ ;; transfer/status enum values
+ [:db/add #db/id[:db.part/user] :db/ident :transfer.status/pending]
+ [:db/add #db/id[:db.part/user] :db/ident :transfer.status/success]
+ [:db/add #db/id[:db.part/user] :db/ident :transfer.status/insufficient-funds]
+ [:db/add #db/id[:db.part/user] :db/ident :transfer.status/no-such-from-account]
+ [:db/add #db/id[:db.part/user] :db/ident :transfer.status/no-such-to-account]
+
+ {:db/id    #db/id[:db.part/user]
+  :db/ident :make-transfer
+  :db/doc   "Performs a transfer between two accounts"
+  :db/fn    #db/fn {:lang   "clojure"
+                    :params [db transfer-id from-account to-account amount]
+                    :code   (let [f (datomic.api/entity db from-account)
+                                  t (datomic.api/entity db to-account)
+                                  f-balance (:account/balance f)
+                                  t-balance (:account/balance t)]
+                              (cond
+                               (nil? f-balance) [[:db/add transfer-id :transfer/status :transfer.status/no-such-from-account]]
+                               (nil? t-balance) [[:db/add transfer-id :transfer/status :transfer.status/no-such-to-account]]
+                               (< f-balance amount) [[:db/add transfer-id :transfer/status :transfer.status/insufficient-funds]]
+                               :else [[:db/add transfer-id :transfer/status :transfer.status/success]
+                                      [:db/add from-account :account/balance (- f-balance amount)]
+                                      [:db/add to-account :account/balance (+ t-balance amount)]]))}}
+ ]
