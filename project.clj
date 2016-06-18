@@ -3,10 +3,10 @@
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.datomic/datomic-free "0.9.5350"]
-                 [clj-time "0.11.0"]
+                 [com.datomic/datomic-free "0.9.5372"]
+                 [clj-time "0.12.0"]
                  [expectations "2.1.8"]
-                 [metosin/compojure-api "1.0.2"]]
+                 [metosin/compojure-api "1.1.2"]]
   :plugins [[lein-datomic "0.2.0"]]
   :ring {:handler account-service.core/app}
   :datomic {:schemas ["resources" ["schema.dtm"]]}
